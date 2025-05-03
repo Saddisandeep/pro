@@ -6,20 +6,30 @@ function StudentDashboard() {
   const [professors, setProfessors] = useState([]);
   const [professorId, setProfessorId] = useState('');
   const [slots, setSlots] = useState([]);
+  const [appointments, setAppointments] = useState([]);
 
   useEffect(() => {
-    // Fetch professors when component loads
-    const fetchProfessors = async () => {
-      try {
-        const res = await API.get('/auth/professors');
-        setProfessors(res.data);
-      } catch (error) {
-        console.error('Error fetching professors', error);
-      }
-    };
-
     fetchProfessors();
+    fetchAppointments();
   }, []);
+
+  const fetchProfessors = async () => {
+    try {
+      const res = await API.get('/auth/professors');
+      setProfessors(res.data);
+    } catch (error) {
+      console.error('Error fetching professors', error);
+    }
+  };
+
+  const fetchAppointments = async () => {
+    try {
+      const res = await API.get('/appointments/my');
+      setAppointments(res.data);
+    } catch (err) {
+      console.error('Failed to fetch student appointments', err);
+    }
+  };
 
   const fetchAvailability = async () => {
     try {
@@ -35,6 +45,7 @@ function StudentDashboard() {
     try {
       await API.post('/appointments', { professorId, date, time });
       alert('Appointment booked!');
+      fetchAppointments(); // Refresh appointment list
     } catch (error) {
       console.error('Error booking appointment', error);
       alert('Failed to book appointment');
@@ -59,6 +70,7 @@ function StudentDashboard() {
       </button>
 
       <div style={{ marginTop: '20px' }}>
+        <h3>Available Slots</h3>
         {slots.length > 0 ? (
           slots.map(slot => (
             <div key={slot._id}>
@@ -77,6 +89,17 @@ function StudentDashboard() {
         ) : (
           professorId && <p>No availability found.</p>
         )}
+      </div>
+
+      <div style={{ marginTop: '40px' }}>
+        <h3>My Booked Appointments</h3>
+        <ul>
+          {appointments.map(appt => (
+            <li key={appt._id}>
+              {new Date(appt.date).toLocaleDateString()} at {appt.time} with {appt.professorId?.username || 'Unknown'}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
