@@ -1,6 +1,7 @@
 const express = require('express');
 const Appointment = require('../models/Appointment');
 const Availability = require('../models/Availability');
+const User = require('../models/User');
 const router = express.Router();
 const auth = require('../utils/authMiddleware');
 
@@ -9,6 +10,19 @@ router.post('/', auth('student'), async (req, res) => {
   try {
     const { professorId, date, time } = req.body;
 
+    // ✅ Validate professorId
+    const professor = await User.findById(professorId);
+    if (!professor || professor.role !== 'professor') {
+      return res.status(400).json({ message: 'Invalid professorId' });
+    }
+
+    // ✅ Validate studentId from token
+    const student = await User.findById(req.user.userId);
+    if (!student || student.role !== 'student') {
+      return res.status(400).json({ message: 'Invalid studentId' });
+    }
+
+    // ✅ Create appointment
     const appointment = new Appointment({
       professorId,
       studentId: req.user.userId,
